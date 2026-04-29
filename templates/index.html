@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABNT Formatter - Formate seu documento nas normas ABNT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #0ea5e9;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--gray);
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .card-icon.formatter {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .card-icon.validator {
+            background: linear-gradient(135deg, var(--success), #16a34a);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .card-description {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--light);
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area.has-file {
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.875rem;
+            color: var(--gray);
+            opacity: 0.7;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #16a34a);
+            color: white;
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Results */
+        .result-box {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .result-box.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success);
+            display: block;
+        }
+
+        .result-box.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            display: block;
+        }
+
+        .result-box.info {
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid var(--secondary);
+            display: block;
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .preview-text {
+            background: var(--light);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Article Results */
+        .article-card {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-left: 4px solid var(--success);
+        }
+
+        .article-card h4 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .article-card p {
+            color: var(--gray);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .article-card a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Features Section */
+        .features {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            margin-top: 3rem;
+        }
+
+        .features h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--dark);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature h3 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .feature p {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--secondary); }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                display: none;
+            }
+
+            .features {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">📄</div>
+                <span>ABNT Formatter</span>
+            </div>
+            <nav>
+                <a href="#formatter">Formatador</a>
+                <a href="#validator">Validador</a>
+                <a href="#features">Recursos</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Formate seus documentos nas normas ABNT</h1>
+            <p>Upload automático, formatação instantânea e validação de artigos científicos em um só lugar.</p>
+        </section>
+
+        <div class="cards-grid">
+            <!-- Card Formatador -->
+            <div class="card" id="formatter">
+                <div class="card-header">
+                    <div class="card-icon formatter">📝</div>
+                    <h2 class="card-title">Formatador ABNT</h2>
+                </div>
+                <p class="card-description">
+                    Formate automaticamente seu documento .docx nas normas da ABNT NBR 14724:2011.
+                    Margens, fonte, espaçamento e citações configurados automaticamente.
+                </p>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p class="upload-text">Arraste seu arquivo .docx aqui</p>
+                    <p class="upload-hint">ou clique para selecionar</p>
+                    <input type="file" id="fileInput" accept=".docx">
+                </div>
+
+                <button class="btn btn-primary btn-block" id="formatBtn" disabled>
+                    🚀 Formatar Documento
+                </button>
+
+                <div class="result-box" id="formatResult"></div>
+            </div>
+
+            <!-- Card Validador -->
+            <div class="card" id="validator">
+                <div class="card-header">
+                    <div class="card-icon validator">✓</div>
+                    <h2 class="card-title">Validador de Artigos</h2>
+                </div>
+                <p class="card-description">
+                    Verifique se um artigo científico existe realmente. Consulte Crossref,
+                    Semantic Scholar e OpenAlex para validação automática.
+                </p>
+
+                <div class="form-group">
+                    <label for="doiInput">DOI (opcional)</label>
+                    <input type="text" id="doiInput" placeholder="10.1000/xyz123">
+                </div>
+
+                <div class="form-group">
+                    <label for="titleInput">Título do Artigo (opcional)</label>
+                    <input type="text" id="titleInput" placeholder="Digite o título do artigo">
+                </div>
+
+                <button class="btn btn-primary btn-block" id="validateBtn">
+                    🔍 Validar Artigo
+                </button>
+
+                <div class="result-box" id="validateResult"></div>
+            </div>
+        </div>
+
+        <section class="features" id="features">
+            <h2>✨ Recursos Principais</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">📐</div>
+                    <h3>Normas ABNT</h3>
+                    <p>Margens 3cm/2cm, fonte Arial 12, espaçamento 1.5, recuo de 1.25cm</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔎</div>
+                    <h3>Validação Multi-Fonte</h3>
+                    <p>Consulta Crossref, Semantic Scholar e OpenAlex simultaneamente</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Processamento Rápido</h3>
+                    <p>Formatação instantânea com download imediato do documento</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3>100% Seguro</h3>
+                    <p>Seus arquivos são processados localmente e não são armazenados</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 ABNT Formatter. Feito para facilitar sua vida acadêmica.</p>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const formatBtn = document.getElementById('formatBtn');
+        const formatResult = document.getElementById('formatResult');
+        const validateBtn = document.getElementById('validateBtn');
+        const validateResult = document.getElementById('validateResult');
+        const doiInput = document.getElementById('doiInput');
+        const titleInput = document.getElementById('titleInput');
+        const toastContainer = document.getElementById('toastContainer');
+
+        let selectedFile = null;
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        // Upload area events
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.includes('wordprocessingml')) {
+                handleFile(files[0]);
+            } else {
+                showToast('Por favor, selecione um arquivo .docx válido', 'error');
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            uploadArea.classList.add('has-file');
+            uploadArea.innerHTML = `
+                <div class="upload-icon">✅</div>
+                <p class="upload-text">${file.name}</p>
+                <p class="upload-hint">${(file.size / 1024).toFixed(2)} KB</p>
+            `;
+            formatBtn.disabled = false;
+            formatResult.style.display = 'none';
+        }
+
+        // Format button
+        formatBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const originalText = formatBtn.innerHTML;
+            formatBtn.innerHTML = '<span class="spinner"></span> Formatando...';
+            formatBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    formatResult.className = 'result-box success';
+                    formatResult.innerHTML = `
+                        <div class="result-title">✅ Documento formatado!</div>
+                        <p>Seu documento foi formatado nas normas ABNT.</p>
+                        <div class="preview-text">${data.preview_text}</div>
+                        <a href="${data.download_url}" class="btn btn-success btn-block" style="margin-top: 1rem; text-decoration: none;">
+                            📥 Baixar Documento Formatado
+                        </a>
+                    `;
+                    showToast('Documento formatado com sucesso!', 'success');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                formatResult.className = 'result-box error';
+                formatResult.innerHTML = `
+                    <div class="result-title">❌ Erro na formatação</div>
+                    <p>${error.message}</p>
+                `;
+                showToast('Erro ao formatar documento', 'error');
+            }
+
+            formatBtn.innerHTML = originalText;
+            formatBtn.disabled = false;
+        });
+
+        // Validate button
+        validateBtn.addEventListener('click', async () => {
+            const doi = doiInput.value.trim();
+            const title = titleInput.value.trim();
+
+            if (!doi && !title) {
+                showToast('Informe o DOI ou título do artigo', 'error');
+                return;
+            }
+
+            const originalText = validateBtn.innerHTML;
+            validateBtn.innerHTML = '<span class="spinner"></span> Validando...';
+            validateBtn.disabled = true;
+
+            try {
+                const response = await fetch('/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ doi, title })
+                });
+
+                const data = await response.json();
+
+                if (data.found) {
+                    let articlesHtml = data.articles.map(article => `
+                        <div class="article-card">
+                            <h4>${article.title}</h4>
+                            <p><strong>Autor:</strong> ${article.author}</p>
+                            <p><strong>Publicado:</strong> ${article.published} ${article.journal ? 'em ' + article.journal : ''}</p>
+                            <p><strong>Fonte:</strong> ${article.source} ${article.citations !== undefined ? `• ${article.citations} citações` : ''}</p>
+                            ${article.url ? `<a href="${article.url}" target="_blank">Ver artigo →</a>` : ''}
+                        </div>
+                    `).join('');
+
+                    validateResult.className = 'result-box success';
+                    validateResult.innerHTML = `
+                        <div class="result-title">✅ ${data.message}</div>
+                        ${articlesHtml}
+                    `;
+                    showToast('Artigo validado com sucesso!', 'success');
+                } else {
+                    validateResult.className = 'result-box error';
+                    validateResult.innerHTML = `
+                        <div class="result-title">⚠️ Artigo não encontrado</div>
+                        <p>${data.message}</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.875rem;">Isso não significa necessariamente que o artigo não existe. Pode ser que ele não esteja indexado nas bases consultadas.</p>
+                    `;
+                    showToast('Artigo não encontrado nas bases consultadas', 'warning');
+                }
+            } catch (error) {
+                validateResult.className = 'result-box error';
+                validateResult.innerHTML = `
+                    <div class="result-title">❌ Erro na validação</div>
+                    <p>${error.message}</p>
+                `;
+                showToast('Erro ao validar artigo', 'error');
+            }
+
+            validateBtn.innerHTML = originalText;
+            validateBtn.disabled = false;
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
