@@ -1299,6 +1299,43 @@
         transform: translateX(-50%) translateY(-8px);
       }
 
+      @media (max-width: 600px) {
+        .chat-container {
+          width: 95vw; /* Ocupa 95% da largura da tela */
+          height: 80vh;
+          right: 2.5vw;
+          bottom: 70px;
+        }
+        @media (max-width: 768px) {
+          /* Faz as colunas de validação ficarem em uma só linha vertical */
+          .validate-options {
+            grid-template-columns: 1fr !important;
+            gap: 16px;
+          }
+
+          /* Faz os cards de "Normas Oficiais", etc, empilharem */
+          .features {
+            grid-template-columns: 1fr !important;
+            padding: 0 10px;
+          }
+
+          /* Diminui o preenchimento (padding) do conteúdo principal para ganhar espaço */
+          .main-content {
+            padding: 20px !important;
+            margin: 10px !important;
+          }
+
+          /* Ajusta o título para não quebrar feio */
+          .logo h1 {
+            font-size: 1.8rem !important;
+          }
+        }
+
+        .chat-message-content {
+          max-width: 90%; /* Deixa as bolhas de texto maiores no celular */
+        }
+      }
+
       /* Responsividade */
       @media (max-width: 1024px) {
         .validate-options {
