@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initFormatTab();
   initValidateTab();
+  initSummaryTab();
+  initChatWidget();
 });
 
 // Página de Boas-vindas
@@ -509,6 +511,336 @@ function initValidateTab() {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+      <span>${message}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  }
+}
+
+// =====================
+// CHAT WIDGET
+// =====================
+function initChatWidget() {
+  const chatButton = document.getElementById('chatButton');
+  const chatContainer = document.getElementById('chatContainer');
+  const chatClose = document.getElementById('chatClose');
+  const chatMessages = document.getElementById('chatMessages');
+  const chatInput = document.getElementById('chatInput');
+  const chatSend = document.getElementById('chatSend');
+
+  if (!chatButton || !chatContainer) return;
+
+  let chatHistory = [];
+  let isOpen = false;
+
+  // Abrir/fechar chat
+  chatButton.addEventListener('click', () => {
+    isOpen = !isOpen;
+    chatContainer.classList.toggle('open');
+    chatButton.classList.toggle('active');
+    chatButton.textContent = isOpen ? '✕' : '💬';
+    if (isOpen) {
+      setTimeout(() => chatInput.focus(), 300);
+    }
+  });
+
+  chatClose.addEventListener('click', () => {
+    isOpen = false;
+    chatContainer.classList.remove('open');
+    chatButton.classList.remove('active');
+    chatButton.textContent = '💬';
+  });
+
+  // Enviar mensagem
+  async function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    // Adicionar mensagem do usuário
+    addMessage(message, 'user');
+    chatInput.value = '';
+    chatSend.disabled = true;
+
+    // Mostrar typing indicator
+    showTyping();
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          history: chatHistory
+        })
+      });
+
+      const data = await response.json();
+      hideTyping();
+
+      if (data.success) {
+        addMessage(data.response, 'ai');
+        chatHistory.push({ role: 'user', content: message });
+        chatHistory.push({ role: 'assistant', content: data.response });
+      } else {
+        addMessage('Desculpe, ocorreu um erro. Tente novamente.', 'ai');
+      }
+    } catch (error) {
+      hideTyping();
+      // Fallback local
+      const fallbackResponse = gerarRespostaFallback(message);
+      addMessage(fallbackResponse, 'ai');
+    }
+
+    chatSend.disabled = false;
+    chatInput.focus();
+  }
+
+  function addMessage(content, type) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-message ${type}`;
+    msgDiv.innerHTML = `<div class="chat-message-content">${content.replace(/\n/g, '<br>')}</div>`;
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function showTyping() {
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chat-typing';
+    typingDiv.id = 'typingIndicator';
+    typingDiv.innerHTML = `
+      <div class="chat-typing-dot"></div>
+      <div class="chat-typing-dot"></div>
+      <div class="chat-typing-dot"></div>
+    `;
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function hideTyping() {
+    const typing = document.getElementById('typingIndicator');
+    if (typing) typing.remove();
+  }
+
+  // Respostas fallback (quando API não está disponível)
+  function gerarRespostaFallback(mensagem) {
+    const msg = mensagem.toLowerCase();
+
+    if (msg.includes('abnt') && (msg.includes('format') || msg.includes('norma'))) {
+      return "Para formatar seu documento nas normas ABNT:\n\n1. Arraste seu arquivo .docx na área de upload\n2. Clique em 'Formatar em ABNT'\n3. Aguarde o processamento\n4. Baixe o documento formatado\n\nO sistema aplicará automaticamente: margens 3cm/2cm, fonte Arial 12, espaçamento 1.5 e recuo de 1.25cm.";
+    }
+
+    if (msg.includes('doi') || msg.includes('validar')) {
+      return "Para validar um artigo:\n\n1. Vá na aba 'Validar Artigo'\n2. Cole o DOI (ex: 10.1000/xyz123) OU digite o título\n3. Clique em 'Validar' ou 'Buscar'\n\nO sistema consultará Semantic Scholar e Crossref.";
+    }
+
+    if (msg.includes('margem') || msg.includes('margens')) {
+      return "As margens nas normas ABNT são:\n• Superior: 3cm\n• Esquerda: 3cm\n• Inferior: 2cm\n• Direita: 2cm";
+    }
+
+    if (msg.includes('fonte')) {
+      return "A fonte recomendada pela ABNT é Arial, tamanho 12 para o corpo do texto. Citações longas (>3 linhas) usam tamanho 10.";
+    }
+
+    if (msg.includes('citaç') || msg.includes('citacao')) {
+      return "Citações com mais de 3 linhas devem ter:\n• Recuo de 4cm da margem esquerda\n• Fonte tamanho 10\n• Espaçamento simples\n• Sem aspas";
+    }
+
+    if (msg.includes('refer')) {
+      return "As referências devem seguir a NBR 6023:\n• Alinhamento à esquerda\n• Espaçamento simples\n• Espaço de 6pt entre referências\n• Ordem alfabética";
+    }
+
+    if (msg.includes('olá') || msg.includes('oi') || msg.includes('ola') || msg.includes('bom dia') || msg.includes('boa tarde')) {
+      return "Olá! 👋 Sou o assistente virtual do Doc Searcher. Como posso ajudar você hoje? Posso tirar dúvidas sobre formatação ABNT, validação de artigos ou como usar o site.";
+    }
+
+    if (msg.includes('obrigad') || msg.includes('valeu')) {
+      return "Por nada! Estou aqui para ajudar. Se tiver mais dúvidas, é só perguntar!";
+    }
+
+    if (msg.includes('pdf')) {
+      return "Na aba 'Validar Artigo', você pode fazer upload de um PDF para extrair e validar todas as referências automaticamente. O sistema identifica os DOIs e verifica cada artigo nas bases acadêmicas.";
+    }
+
+    if (msg.includes('preço') || msg.includes('custo') || msg.includes('gratis') || msg.includes('gratuito')) {
+      return "O Doc Searcher é 100% gratuito para uso! Você pode formatar documentos e validar artigos sem custo algum.";
+    }
+
+    return "Desculpe, não entendi completamente. Posso ajudar com:\n• Formatação ABNT de documentos\n• Validação de artigos por DOI ou título\n• Dúvidas sobre normas ABNT (margens, fonte, citações, referências)\n\nComo posso ajudar?";
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // Toast de boas-vindas após 2 segundos
+  setTimeout(() => {
+    showToast('💡 Precisa de ajuda? Clique no chat no canto inferior direito!', 'info');
+  }, 2000);
+}
+
+// =====================
+// SUMMARY TAB LOGIC
+// =====================
+function initSummaryTab() {
+  const summaryDropZone = document.getElementById('summary-drop-zone');
+  const summaryFileInput = document.getElementById('summary-file-input');
+  const summaryFileInfo = document.getElementById('summary-file-info');
+  const summaryFileName = document.getElementById('summary-file-name');
+  const summaryFileSize = document.getElementById('summary-file-size');
+  const summaryRemoveFileBtn = document.getElementById('summary-remove-file');
+  const summarizeBtn = document.getElementById('summarize-btn');
+  const summaryResults = document.getElementById('summary-results');
+
+  let currentSummaryFile = null;
+
+  if (!summaryDropZone || !summaryFileInput) return;
+
+  summaryDropZone.addEventListener('click', () => summaryFileInput.click());
+
+  summaryDropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    summaryDropZone.classList.add('drag-over');
+  });
+
+  summaryDropZone.addEventListener('dragleave', () => {
+    summaryDropZone.classList.remove('drag-over');
+  });
+
+  summaryDropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    summaryDropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length > 0) handleSummaryFile(e.dataTransfer.files[0]);
+  });
+
+  summaryFileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) handleSummaryFile(e.target.files[0]);
+  });
+
+  function handleSummaryFile(file) {
+    const ext = file.name.toLowerCase().split('.').pop();
+    if (ext !== 'pdf' && ext !== 'docx') {
+      showToast('Por favor, selecione um arquivo PDF ou DOCX', 'error');
+      return;
+    }
+    currentSummaryFile = file;
+    summaryFileName.textContent = file.name;
+    summaryFileSize.textContent = formatFileSize(file.size);
+    summaryDropZone.classList.add('hidden');
+    summaryFileInfo.classList.remove('hidden');
+    summarizeBtn.disabled = false;
+    summaryResults.classList.add('hidden');
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' bytes';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  if (summaryRemoveFileBtn) {
+    summaryRemoveFileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentSummaryFile = null;
+      summaryFileInput.value = '';
+      summaryFileInfo.classList.add('hidden');
+      summaryDropZone.classList.remove('hidden');
+      summarizeBtn.disabled = true;
+      summaryResults.classList.add('hidden');
+    });
+  }
+
+  if (summarizeBtn) {
+    summarizeBtn.addEventListener('click', async () => {
+      if (!currentSummaryFile) return;
+
+      const formData = new FormData();
+      formData.append('article', currentSummaryFile);
+
+      summarizeBtn.disabled = true;
+      summarizeBtn.innerHTML = '<span class="spinner"></span> Processando Artigo...';
+      summaryResults.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/summarize', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Erro ao processar resumo');
+        }
+
+        const data = await response.json();
+        displaySummaryResults(data);
+        showToast('Resumo gerado com sucesso!', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        summarizeBtn.disabled = false;
+        summarizeBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Gerar Resumo com IA
+        `;
+      }
+    });
+  }
+
+  function displaySummaryResults(data) {
+    const { resumo, citacoes } = data;
+    
+    summaryResults.innerHTML = `
+      <div class="result-card" style="border-left-color: var(--primary); margin-bottom: 32px;">
+        <h4 style="color: var(--primary-dark); margin-bottom: 16px;">📄 Análise do Artigo: ${data.fileName}</h4>
+        
+        <div class="summary-section">
+          <h5>🎯 Objetivos</h5>
+          <p>${resumo.objetivos}</p>
+        </div>
+        
+        <div class="summary-section">
+          <h5>🔬 Metodologia</h5>
+          <p>${resumo.metodologia}</p>
+        </div>
+        
+        <div class="summary-section">
+          <h5>📊 Resultados</h5>
+          <p>${resumo.resultados}</p>
+        </div>
+        
+        <div class="summary-section">
+          <h5>✅ Conclusão</h5>
+          <p>${resumo.conclusao}</p>
+        </div>
+
+        ${citacoes && citacoes.length > 0 ? `
+          <div class="summary-section" style="border-left-color: var(--secondary);">
+            <h5>💬 Citações Importantes</h5>
+            <div class="citations-list">
+              ${citacoes.map(cit => `<div class="citation-item">${cit}</div>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+    
+    summaryResults.classList.remove('hidden');
+    summaryResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function showToast(message, type = 'info') {

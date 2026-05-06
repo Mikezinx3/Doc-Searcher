@@ -573,3 +573,59 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Summary Results */
+.summary-results {
+  margin-top: 32px;
+  animation: fadeInUp 0.5s ease;
+}
+
+.summary-section {
+  background: var(--gray-50);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--primary);
+}
+
+.summary-section h5 {
+  font-size: 1.1rem;
+  color: var(--primary-dark);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-section p {
+  font-size: 1rem;
+  color: var(--gray-700);
+  line-height: 1.7;
+}
+
+.citations-list {
+  list-style: none;
+}
+
+.citation-item {
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid var(--gray-200);
+  font-style: italic;
+  position: relative;
+  color: var(--gray-600);
+}
+
+.citation-item::before {
+  content: '"';
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  font-size: 2rem;
+  color: var(--gray-200);
+  font-family: serif;
+}

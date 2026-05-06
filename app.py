@@ -10,6 +10,13 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.enum.style import WD_STYLE_TYPE
 from werkzeug.utils import secure_filename
 
+try:
+    from anthropic import Anthropic
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+    client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+except ImportError:
+    client = None
+
 app = Flask(__name__)
 CORS(app)
 
@@ -318,6 +325,98 @@ def extract_article_info():
             return jsonify({'error': f'Erro ao extrair informações: {str(e)}'}), 500
 
     return jsonify({'error': 'Formato não suportado'}), 400
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    """Endpoint para chat com IA assistente"""
+    data = request.get_json()
+    user_message = data.get('message', '')
+    conversation_history = data.get('history', [])
+
+    if not user_message:
+        return jsonify({'error': 'Mensagem vazia'}), 400
+
+    # System prompt com contexto sobre o site e ABNT
+    system_prompt = """Você é um assistente virtual especializado em ajudar usuários com:
+1. Formatação de documentos nas normas ABNT (NBR 14724, NBR 6023, NBR 10520)
+2. Validação de artigos científicos
+3. Uso deste site (ABNT Formatter)
+
+Seu tom deve ser:
+- Amigável e prestativo
+- Claro e direto
+- Especializado em normas acadêmicas
+
+Informações sobre o site:
+- Formata documentos .docx automaticamente nas normas ABNT
+- Valida artigos via DOI ou título usando Crossref, Semantic Scholar e OpenAlex
+- Margens: 3cm (superior/esquerda), 2cm (inferior/direita)
+- Fonte: Arial 12, espaçamento 1.5, recuo 1.25cm
+
+Se não souber algo, seja honesto e sugira consultar as normas oficiais."""
+
+    # Construir mensagens para a API
+    messages = []
+    for msg in conversation_history[-10:]:  # Últimas 10 mensagens
+        messages.append({
+            "role": msg['role'],
+            "content": msg['content']
+        })
+
+    try:
+        if client:
+            response = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=500,
+                system=system_prompt,
+                messages=[
+                    {"role": "user", "content": user_message}
+                ] + messages
+            )
+            ai_response = response.content[0].text
+        else:
+            # Fallback quando API key não está configurada
+            ai_response = gerar_resposta_fallback(user_message)
+
+        return jsonify({
+            'success': True,
+            'response': ai_response
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'response': gerar_resposta_fallback(user_message)
+        })
+
+def gerar_resposta_fallback(mensagem):
+    """Gera respostas básicas quando a API do Claude não está disponível"""
+    mensagem = mensagem.lower()
+
+    if 'abnt' in mensagem and 'format' in mensagem:
+        return "Para formatar seu documento nas normas ABNT:\n\n1. Arraste seu arquivo .docx na área de upload\n2. Clique em 'Formatar Documento'\n3. Aguarde o processamento\n4. Baixe o documento formatado\n\nO sistema aplicará automaticamente: margens 3cm/2cm, fonte Arial 12, espaçamento 1.5 e recuo de 1.25cm."
+
+    if 'doi' in mensagem or 'validar' in mensagem:
+        return "Para validar um artigo:\n\n1. Vá na seção 'Validador de Artigos'\n2. Cole o DOI (ex: 10.1000/xyz123) OU digite o título\n3. Clique em 'Validar Artigo'\n\nO sistema consultará Crossref, Semantic Scholar e OpenAlex."
+
+    if 'margem' in mensagem or 'margens' in mensagem:
+        return "As margens nas normas ABNT são:\n• Superior: 3cm\n• Esquerda: 3cm\n• Inferior: 2cm\n• Direita: 2cm"
+
+    if 'fonte' in mensagem:
+        return "A fonte recomendada pela ABNT é Arial, tamanho 12 para o corpo do texto. Citações longas (>3 linhas) usam tamanho 10."
+
+    if 'citaç' in mensagem or 'citacao' in mensagem:
+        return "Citações com mais de 3 linhas devem ter:\n• Recuo de 4cm da margem esquerda\n• Fonte tamanho 10\n• Espaçamento simples\n• Sem aspas"
+
+    if 'refer' in mensagem:
+        return "As referências devem seguir a NBR 6023:\n• Alinhamento à esquerda\n• Espaçamento simples\n• Espaço de 6pt entre referências\n• Ordem alfabética"
+
+    if 'olá' in mensagem or 'oi' in mensagem or 'ola' in mensagem:
+        return "Olá! Sou o assistente virtual do ABNT Formatter. Como posso ajudar você hoje? Posso tirar dúvidas sobre formatação ABNT, validação de artigos ou como usar o site."
+
+    if 'obrigad' in mensagem:
+        return "Por nada! Estou aqui para ajudar. Se tiver mais dúvidas, é só perguntar!"
+
+    return "Desculpe, não entendi completamente. Posso ajudar com:\n• Formatação ABNT de documentos\n• Validação de artigos por DOI ou título\n• Dúvidas sobre normas ABNT (margens, fonte, citações, referências)\n\nComo posso ajudar?"
 
 if __name__ == '__main__':
     os.makedirs('uploads', exist_ok=True)
