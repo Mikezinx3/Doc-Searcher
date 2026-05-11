@@ -14,7 +14,7 @@ Formate documentos acadêmicos nas normas da ABNT e valide artigos científicos 
 
 ### Pré-requisitos
 
-- Node.js 18+ 
+- Node.js 18+
 
 ### Passos
 
@@ -23,21 +23,24 @@ Formate documentos acadêmicos nas normas da ABNT e valide artigos científicos 
 cd backend
 npm install
 
-# (Opcional) Configure a API do Anthropic para o assistente virtual
-# Copie o arquivo .env.example para .env e adicione sua chave
-cp ../.env.example .env
-# Edite .env e adicione: ANTHROPIC_API_KEY=sk-ant-...
+#configure a API
+ Configure o arquivo `.env` com sua chave do Gemini:
+```
+
+GEMINI_API_KEY=sua_chave_aqui
 
 # Inicie o servidor
+
 npm start
+
 ```
 
 O servidor iniciará em `http://localhost:3000`
 
 ### Assistente Virtual com IA
 
-Para usar o assistente virtual com IA (Claude), você precisa de uma API key da Anthropic:
-1. Acesse https://console.anthropic.com/
+Para usar o assistente virtual com IA, você precisa de uma API key:
+1. Acesse https://aistudio.google.com/app/apikey
 2. Crie uma conta e gere uma API key
 3. Adicione no arquivo `.env` na pasta `backend/`
 
@@ -51,19 +54,21 @@ Para usar o assistente virtual com IA (Claude), você precisa de uma API key da 
 ## Estrutura do Projeto
 
 ```
+
 Doc-Searcher/
 ├── backend/
-│   ├── server.js           # Servidor Express
-│   ├── abnt-formatter.js   # Formatação ABNT
-│   ├── article-validator.js # Validação de artigos
-│   └── package.json
+│ ├── server.js # Servidor Express
+│ ├── abnt-formatter.js # Formatação ABNT
+│ ├── article-validator.js # Validação de artigos
+│ └── package.json
 └── frontend/
-    └── public/
-        ├── index.html      # Página principal
-        ├── styles/
-        │   └── main.css    # Estilos
-        └── scripts/
-            └── main.js     # JavaScript do frontend
+└── public/
+├── index.html # Página principal
+├── styles/
+│ └── main.css # Estilos
+└── scripts/
+└── main.js # JavaScript do frontend
+
 ```
 
 ## Uso
@@ -92,3 +97,4 @@ Doc-Searcher/
 ## License
 
 MIT
+```
